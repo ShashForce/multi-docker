@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t shashforce/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run shashforce/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t shashforce/multi-client ./client
+  - docker build -t shashforce/multi-nginx ./nginx
+  - docker build -t shashforce/multi-server ./server
+  - docker build -t shashforce/multi-worker ./worker
+  # login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take images and push to docker hub
+  - docker push shashforce/multi-client
+  - docker push shashforce/multi-nginx
+  - docker push shashforce/multi-server
+  - docker push shashforce/multi-worker
